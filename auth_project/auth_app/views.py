@@ -23,7 +23,71 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.pagination import PageNumberPagination, CursorPagination
-from rest_framework.versioning import QueryParameterVersioning, URLPathVersioning
+from rest_framework.versioning import QueryParameterVersioning, URLPathVersioning, NamespaceVersioning
+from rest_framework.renderers import JSONRenderer, HTMLFormRenderer, TemplateHTMLRenderer, BrowsableAPIRenderer, OpenAPIRenderer
+from .negotiation import IgnoreClientContentNegotiation
+from rest_framework.metadata import SimpleMetadata
+from rest_framework.reverse import reverse
+from .authentication import CookieJWTAuthentication
+from django.utils.timezone import now
+
+
+class RootApiView(APIView):
+    def get(self, request):
+        year = now().year
+        data = {
+            'year-summary-url': reverse('year-summary', args=[year], request=request)
+        }
+        return Response(data)
+
+class CustomMeta(SimpleMetadata):
+    def determine_metadata(self, request, view):
+        metadata = super().determine_metadata(request, view)
+        metadata['note'] = "This is a custom note added to metadata."
+        return metadata
+
+class ApiRootWithCustomMetadata(APIView):
+    metadata_class = CustomMeta
+    permission_classes = [AllowAny]
+    def get(self, request):
+        return Response({"message": "Hello from DRF!"})
+
+class ApiRoot(APIView):
+    metadata_class = SimpleMetadata
+    permission_classes = [AllowAny]
+    def get(self, request):
+        return Response({"message": "Hello from DRF!"})
+
+
+class ContentNegotiation(APIView):
+    permission_classes = [AllowAny]
+    renderer_classes = [TemplateHTMLRenderer]
+    def get(self, request):
+        return Response({"message": "Hello from DRF!"}, template_name="auth_app/content_negotiation.html")
+
+class NoNegotiationView(APIView):
+    """
+    An example view that does not perform content negotiation.
+    """
+    content_negotiation_class = IgnoreClientContentNegotiation
+
+    def get(self, request, format=None):
+        return Response({
+            'accepted media type': request.accepted_renderer.media_type
+        })
+
+class ListUserNamespaceView(APIView):
+    versioning_class = NamespaceVersioning
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        if request.version == 'v1':
+            data = [{"username": user.username} for user in User.objects.all()]
+        elif request.version == 'v2':
+            data = [{"username": user.username, "email": user.email} for user in User.objects.all()]
+        else:
+            return Response({"error": "Invalid version"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(data)
 
 class ListUserVersionView(generics.ListAPIView):
     versioning_class = QueryParameterVersioning
@@ -189,6 +253,7 @@ class LogoutView(APIView):
 
 @method_decorator(cache_page(30), name='dispatch')
 class ProtectedView(APIView):
+    authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request):

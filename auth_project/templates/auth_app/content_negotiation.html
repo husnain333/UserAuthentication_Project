@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Negotiation - Django REST Framework</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .message {
+            background-color: #e8f5e8;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #4caf50;
+            margin: 20px 0;
+        }
+        .info {
+            background-color: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #2196f3;
+            margin: 20px 0;
+        }
+        .code {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: monospace;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Django REST Framework Content Negotiation</h1>
+        
+        <div class="message">
+            <h3>Success!</h3>
+            <p><strong>Message:</strong> {{ message }}</p>
+        </div>
+        
+        <div class="info">
+            <h3>Template Information</h3>
+            <p>This page is rendered using Django's <code>TemplateHTMLRenderer</code>.</p>
+            <p>The data is passed from your DRF API view and rendered as HTML instead of JSON.</p>
+        </div>
+        
+        <div class="info">
+            <h3>How Content Negotiation Works</h3>
+            <p>Django REST Framework uses content negotiation to determine:</p>
+            <ul>
+                <li>Which renderer to use for the response</li>
+                <li>Which parser to use for the request</li>
+            </ul>
+            <p>In this case, we're using <code>TemplateHTMLRenderer</code> to return HTML instead of JSON.</p>
+        </div>
+        
+        <div class="code">
+            <h4>View Code:</h4>
+            <pre>class ContentNegotiation(APIView):
+    permission_classes = [AllowAny]
+    renderer_classes = [TemplateHTMLRenderer]
+    
+    def get(self, request):
+        return Response({"message": "Hello from DRF!"}, 
+                       template_name="content_negotiation.html")</pre>
+        </div>
+    </div>
+</body>
+</html>
